@@ -56,7 +56,7 @@ accelerator = 1
 accelerator_incr = 0.6
 # defining corners in screen
 HOR_EXTREME = 0.4
-VER_EXTREME = 0.3
+VER_EXTREME = 0.4
 # scale of screen
 SCREEN_W = 1366
 SCREEN_H = 768
@@ -105,8 +105,14 @@ def load_inference_graph():
 # draw the detected bounding boxes on the images
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
     global center_old, left_hand_flag, right_hand_flag
+    global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
+
     # initializing centers with max numbers
     new_centers = [(2000, 2000), (2000, 2000)]
+    #drawing rectangle to show center where the mouse stops
+    cv2.rectangle(image_np, (75,42), (245,190), (255, 0, 0), 3, 1)
+    cv2.putText(image_np, 'Center', (80,130), cv2.FONT_HERSHEY_SIMPLEX,  1.5, (0,0,0), 2, cv2.LINE_AA)
+
     # detecting hands
     # looping through hands detected
     for i in range(num_hands_detect):
@@ -141,6 +147,7 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
         mouse_control_option2(new_centers[mouse_index])
         center_old = new_centers[mouse_index]
 
+
     # the largest difference is the classifing hand
     if scores[(mouse_index+1) % 2] > 0.6:
         (left, right, top, bottom) = (boxes[(mouse_index+1) % 2][1] * im_width, boxes[(mouse_index+1) % 2][3] * im_width,
@@ -151,11 +158,9 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
         # gesture classifier function calling
         gesture_classifier(left-5, right+5, top-5, bottom+5, image_np)
 
-
 # Mouse tracking function
 # Option 1: Move mouse with hand movement
 def mouse_control_option1(center, center_old, left, right, top, bottom, image_np):
-    print(center)
     global x_sign_old, y_sign_old, sensitivity_x, sensitivity_y, accelerator
     x_sign, y_sign = 0, 0
     # difference between center of current frame and last frame
@@ -189,7 +194,6 @@ def mouse_control_option1(center, center_old, left, right, top, bottom, image_np
 # Option 2: Increment mouse position with hand movement:
 #When hand goes to right: mouse moves to right .. etc.
 def mouse_control_option2(center):
-    print(center)
     global sensitivity_x, sensitivity_y, accelerator, accelerator_incr, hor_region_left
     global hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
     # if cv2.waitKey(1) & 0xFF == ord('+'):
