@@ -17,11 +17,13 @@ import tensorflow.keras.applications.vgg16 as vgg16
 import tensorflow.keras.applications.vgg19 as vgg19
 import tensorflow.keras.applications.resnet50 as resnet50
 import math
-
+counter = 0
 # loading model of classifier
 model1 = resnet50.ResNet50(
     weights='imagenet', include_top=False, input_shape=(128, 128, 3), classes=6)
 model = load_model('train91_valoss_0.6_vallacc82.hdf5')
+model.load_weights('train91_valoss_0.6_vallacc82.hdf5') 
+
 classes = ['fist', 'one', 'two', 'three', 'four', 'palm']
 
 # taking average of last 3 frames scores for classes
@@ -53,7 +55,7 @@ y_sign_old = 0
 sensitivity_x = 3
 sensitivity_y = 3
 accelerator = 1
-accelerator_incr = 0.6
+accelerator_incr = 0.4
 # defining corners in screen
 HOR_EXTREME = 0.4
 VER_EXTREME = 0.4
@@ -70,6 +72,17 @@ ver_region_bottom = (ver_region_mid[1], SCREEN_H)
 
 # last_gesture
 last_gesture = ""
+#last number of hands detected
+last_num_hands = 0
+current_num_hands = 0
+#last region detected
+LEFT_REGION = 0
+RIGHT_REGION = 1
+TOP_REGION = 2
+BOTTOM_REGION = 3
+CENTER_REGION = 4
+last_region = CENTER_REGION
+current_region = CENTER_REGION
 
 MODEL_NAME = 'trained-inference-graphs'
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
@@ -104,19 +117,21 @@ def load_inference_graph():
 
 # draw the detected bounding boxes on the images
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
-    global center_old, left_hand_flag, right_hand_flag
+    global center_old, left_hand_flag, right_hand_flag, last_gesture, last_num_hands, current_num_hands, counter
     global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
 
     # initializing centers with max numbers
     new_centers = [(2000, 2000), (2000, 2000)]
     #drawing rectangle to show center where the mouse stops
+    img_to_show = image_np.copy()
     cv2.rectangle(image_np, (75,42), (245,190), (255, 0, 0), 3, 1)
     cv2.putText(image_np, 'Center', (80,130), cv2.FONT_HERSHEY_SIMPLEX,  1.5, (0,0,0), 2, cv2.LINE_AA)
-
+    current_num_hands = 0
     # detecting hands
     # looping through hands detected
     for i in range(num_hands_detect):
         if (scores[i] > 0.6):  # Score for how likely is it really a hand
+            current_num_hands += 1
             # Get hand boundries
             (left, right, top, bottom) = (boxes[i][1] * im_width, boxes[i][3] * im_width,
                                           boxes[i][0] * im_height, boxes[i][2] * im_height)
@@ -124,6 +139,17 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
             center = (((int(((right-left)/2) + left))/im_width)*SCREEN_W,
                       ((int(((bottom-top)/2)+top))/im_height)*SCREEN_H)
             new_centers[i] = center
+            
+#    print("current num hands",current_num_hands)
+#    print("last num hands before condition",last_num_hands)
+    if current_num_hands == 2 and last_num_hands == 1:
+        last_gesture = "palm"
+        last_num_hands = 2
+#        print("last gesture in palm condition",last_gesture)
+    elif current_num_hands == 1:
+        last_num_hands = 1
+#    print("last num hands after condition",last_num_hands)
+
     # determining difference between old center and new cnters of both hands
     distance_diff = [0, 0]
     mouse_index = 0
@@ -156,7 +182,10 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
         p2 = (int(right), int(bottom))
         cv2.rectangle(image_np, p1, p2, (0, 0, 255), 3, 1)
         # gesture classifier function calling
-        gesture_classifier(left-5, right+5, top-5, bottom+5, image_np)
+        counter+=1
+        if counter == 5:
+            gesture_classifier(left, right, top, bottom, img_to_show)
+            counter = 0
 
 # Mouse tracking function
 # Option 1: Move mouse with hand movement
@@ -194,7 +223,7 @@ def mouse_control_option1(center, center_old, left, right, top, bottom, image_np
 # Option 2: Increment mouse position with hand movement:
 #When hand goes to right: mouse moves to right .. etc.
 def mouse_control_option2(center):
-    global sensitivity_x, sensitivity_y, accelerator, accelerator_incr, hor_region_left
+    global sensitivity_x, sensitivity_y, accelerator, accelerator_incr, hor_region_left, last_region, current_region
     global hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
     # if cv2.waitKey(1) & 0xFF == ord('+'):
     #     print("current accelerator increment: ",accelerator_incr)
@@ -205,30 +234,42 @@ def mouse_control_option2(center):
     if center_x < hor_region_left[1]:
         mouse.move(-1*sensitivity_x*accelerator, 0*sensitivity_y*accelerator)
         accelerator += accelerator_incr
+        current_region = LEFT_REGION
     elif center_x > hor_region_right[0]:
         mouse.move(1*sensitivity_x*accelerator, 0*sensitivity_y*accelerator)
         accelerator += accelerator_incr
+        current_region = RIGHT_REGION
     elif center_y < ver_region_top[1]:
         mouse.move(0*sensitivity_x*accelerator, -1*sensitivity_y*accelerator)
         accelerator += accelerator_incr
+        current_region = TOP_REGION
     elif center_y > ver_region_bottom[0]:
         mouse.move(0*sensitivity_x*accelerator, 1*sensitivity_y*accelerator)
         accelerator += accelerator_incr
+        current_region = BOTTOM_REGION
     else:
         mouse.move(0*sensitivity_x, 0*sensitivity_y)
+        current_region = CENTER_REGION
+    if current_region != last_region:
         accelerator = 1
+    last_region = current_region
+
 
 
 # gesture classifier function using the model for prediction
 def gesture_classifier(left, right, top, bottom, image_np):
-    global last_gesture, pred_counter, list_predictions
+    global last_gesture, pred_counter, list_predictions, counter
     crop_img = image_np[int(top):int(bottom), int(left):int(right)]
     if(not crop_img.any()):
         return
     crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
     crop_img = Image.fromarray(crop_img)
     crop_img = crop_img.resize((128, 128), Image.ANTIALIAS)
+    
+#    crop_img = Image.open("C:/TensorFlow/workspace/training_demo/mark81.jpg")
+    crop_img = crop_img.transpose(Image.FLIP_LEFT_RIGHT)
     crop_img = np.asarray(crop_img)
+#    cv2.imwrite("C:/TensorFlow/workspace/training_demo/mark"+str(counter)+".jpg",crop_img)
 
     crop_img = crop_img.astype('float32')
     crop_img = np.expand_dims(crop_img, axis=0)
@@ -240,6 +281,8 @@ def gesture_classifier(left, right, top, bottom, image_np):
     pred_counter = (pred_counter+1) % prediction_interval
     # get the class with the most number of votes in the last three frames
     gesture, y = predict(list_predictions)
+#    print("last gesture before conditions: ",last_gesture)
+    print(y_new)
     if gesture > 0.5:
         print(classes[y])
         if classes[y] == "one" and last_gesture != "one":
