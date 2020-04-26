@@ -87,4 +87,5 @@ We constructed our dataset by integrating [images](https://drive.google.com/driv
 ### 3. Training the model on the custom dataset
 * We used the follwing [Google Colab Notebook](https://drive.google.com/open?id=1bMq-GQafn67xkotlfF9dReOSywc2QY1s)**(WIP)** to train our Classifier Model
 
-
+## Mouse Driver
+#### We used the following python module for controlling the mouse [moses-palmer/pynput](https://github.com/moses-palmer/pynput)
