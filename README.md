@@ -37,3 +37,18 @@ To Start Using this system, you need to have these installed on your machine:
 5. Second hand appears into the frame will be used to do the gestures for mouse action (to click, right click .. etc.) and will be bounded with **blue rectangle**.
 
 6. Move the first hand to move the mosue; moving to the right of screen will move the mouse to the right, same with left, top, and bottom.
+
+# Mouse Actions
+In order to do mouse actions some gestures should be made , and there pre mapped gestures to certain actions :
+* Left Click 
+***
+![Gesture one](https://i.ibb.co/PxsWzk9/dyaa-one855original.png) 
+***
+* Double Click
+***
+![Gesture two](https://i.ibb.co/GTzHCLs/dyaa-two759original.png) 
+***
+* Right Click
+***
+![Gesture fist](https://i.ibb.co/sPXDpM0/dyaa-fist908original.png) 
+***
