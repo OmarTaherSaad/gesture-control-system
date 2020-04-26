@@ -67,13 +67,13 @@ In order to do mouse actions some gestures should be made , and there pre mapped
 
 *   [Weights](http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_2018_01_28.tar.gz)
 ### 3. Detector Model Training Notebook
-* We used the follwing [Colab Notebook](https://colab.research.google.com/drive/1M5yvo2NahWi517Ha3dezRXUgAx8iQnRb?fbclid=IwAR1AeMffcjmOe0JhHLcLMFBMdBiyo-sFqsWnY4MZyTKgKleBLmcPXAJFVvM) to train our Detector Model
+* We used the follwing [Google Colab Notebook](https://colab.research.google.com/drive/1M5yvo2NahWi517Ha3dezRXUgAx8iQnRb?fbclid=IwAR1AeMffcjmOe0JhHLcLMFBMdBiyo-sFqsWnY4MZyTKgKleBLmcPXAJFVvM) to train our Detector Model
 ### 4. DataSet
 We constructed our dataset by integrating [images](https://drive.google.com/drive/folders/1hQB0s_W-kOr7ZxHNQvVG-ip8RDjrfsvY?fbclid=IwAR34E9Xrl2Ap8kuHJ7RJ3p1fqnADlR3MgWJ3QiiZC3UcmjvJ0qfqNgpjT58) from 
 1. Egohands Dataset 
 2. Custom images we captured
 ### 5. Building Custom Dataset
-* We capture images using trackgesture.py**(WIP)** file and save it to the local machine
+* We capture images using trackgesture.py **(WIP)** file and save it to the local machine
 * We label the captured images using [labelimg](https://github.com/tzutalin/labelImg)
 
 ## Gesture Classifier Model
