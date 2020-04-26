@@ -92,7 +92,7 @@ if __name__ == '__main__':
         '--num-workers',
         dest='num_workers',
         type=int,
-        default=4,
+        default=1,
         help='Number of workers.')
     parser.add_argument(
         '-q-size',
