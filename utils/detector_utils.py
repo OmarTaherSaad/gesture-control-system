@@ -17,7 +17,6 @@ import tensorflow.keras.applications.vgg16 as vgg16
 import tensorflow.keras.applications.vgg19 as vgg19
 import tensorflow.keras.applications.resnet50 as resnet50
 import math
-counter = 0
 # loading model of classifier
 model1 = resnet50.ResNet50(
     weights='imagenet', include_top=False, input_shape=(128, 128, 3), classes=6)
@@ -49,19 +48,26 @@ x_sign_old = 0
 
 # y_sign_old for defining last y_direction
 y_sign_old = 0
-# last move
-
+###########################################
+#parameters to be configured
+###########################################
 # mouse_sensitivity
 sensitivity_x = 3
 sensitivity_y = 3
 accelerator = 1
-accelerator_incr = 0.4
+accelerator_incr = 0.2
 # defining corners in screen
 HOR_EXTREME = 0.4
 VER_EXTREME = 0.4
 # scale of screen
 SCREEN_W = 1366
 SCREEN_H = 768
+#rectangle gui for center
+top_left_x = 75
+top_left_y = 42
+bottom_right_x = 245
+bottom_right_y = 190
+#########################################
 # screen_regions
 hor_region_left = (0, SCREEN_W * HOR_EXTREME)
 hor_region_mid = (hor_region_left[1], SCREEN_W - (SCREEN_W * HOR_EXTREME))
@@ -124,7 +130,7 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
     new_centers = [(2000, 2000), (2000, 2000)]
     #drawing rectangle to show center where the mouse stops
     img_to_show = image_np.copy()
-    cv2.rectangle(image_np, (75,42), (245,190), (255, 0, 0), 3, 1)
+    cv2.rectangle(image_np, (top_left_x,top_left_y), (bottom_right_x,bottom_right_y), (255, 0, 0), 3, 1)
     cv2.putText(image_np, 'Center', (80,130), cv2.FONT_HERSHEY_SIMPLEX,  1.5, (0,0,0), 2, cv2.LINE_AA)
     current_num_hands = 0
     # detecting hands
@@ -182,10 +188,7 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
         p2 = (int(right), int(bottom))
         cv2.rectangle(image_np, p1, p2, (0, 0, 255), 3, 1)
         # gesture classifier function calling
-        counter+=1
-        if counter == 5:
-            gesture_classifier(left, right, top, bottom, img_to_show)
-            counter = 0
+        gesture_classifier(left, right, top, bottom, img_to_show)
 
 # Mouse tracking function
 # Option 1: Move mouse with hand movement
@@ -267,7 +270,7 @@ def gesture_classifier(left, right, top, bottom, image_np):
     crop_img = crop_img.resize((128, 128), Image.ANTIALIAS)
     
 #    crop_img = Image.open("C:/TensorFlow/workspace/training_demo/mark81.jpg")
-    crop_img = crop_img.transpose(Image.FLIP_LEFT_RIGHT)
+#    crop_img = crop_img.transpose(Image.FLIP_LEFT_RIGHT)
     crop_img = np.asarray(crop_img)
 #    cv2.imwrite("C:/TensorFlow/workspace/training_demo/mark"+str(counter)+".jpg",crop_img)
 
@@ -282,7 +285,7 @@ def gesture_classifier(left, right, top, bottom, image_np):
     # get the class with the most number of votes in the last three frames
     gesture, y = predict(list_predictions)
 #    print("last gesture before conditions: ",last_gesture)
-    print(y_new)
+#    print(y_new)
     if gesture > 0.5:
         print(classes[y])
         if classes[y] == "one" and last_gesture != "one":
