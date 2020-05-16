@@ -52,8 +52,7 @@ y_sign_old = 0
 #parameters to be configured
 ###########################################
 # mouse_sensitivity
-sensitivity_x = 3
-sensitivity_y = 3
+sensitivity = 3
 accelerator = 1
 accelerator_incr = 0.2
 # defining corners in screen
@@ -123,9 +122,9 @@ def load_inference_graph():
 
 # draw the detected bounding boxes on the images
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
-    global center_old, left_hand_flag, right_hand_flag, last_gesture, last_num_hands, current_num_hands, counter
+    global center_old, left_hand_flag, right_hand_flag, last_num_hands, current_num_hands, counter
     global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
-
+    last_gesture = ""
     # initializing centers with max numbers
     new_centers = [(2000, 2000), (2000, 2000)]
     #drawing rectangle to show center where the mouse stops
@@ -187,9 +186,11 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
         p1 = (int(left), int(top))
         p2 = (int(right), int(bottom))
         cv2.rectangle(image_np, p1, p2, (0, 0, 255), 3, 1)
+        crop_img = crop_hands (left, right, top, bottom, img_to_show)
+        return crop_img, last_gesture
         # gesture classifier function calling
-        gesture_classifier(left, right, top, bottom, img_to_show)
-
+#        gesture_classifier(left, right, top, bottom, img_to_show)
+    return None,""
 # Mouse tracking function
 # Option 1: Move mouse with hand movement
 def mouse_control_option1(center, center_old, left, right, top, bottom, image_np):
@@ -226,7 +227,7 @@ def mouse_control_option1(center, center_old, left, right, top, bottom, image_np
 # Option 2: Increment mouse position with hand movement:
 #When hand goes to right: mouse moves to right .. etc.
 def mouse_control_option2(center):
-    global sensitivity_x, sensitivity_y, accelerator, accelerator_incr, hor_region_left, last_region, current_region
+    global sensitivity, accelerator, accelerator_incr, hor_region_left, last_region, current_region
     global hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
     # if cv2.waitKey(1) & 0xFF == ord('+'):
     #     print("current accelerator increment: ",accelerator_incr)
@@ -235,45 +236,42 @@ def mouse_control_option2(center):
     center_x = center[0]
     center_y = center[1]
     if center_x < hor_region_left[1]:
-        mouse.move(-1*sensitivity_x*accelerator, 0*sensitivity_y*accelerator)
+        mouse.move(-1*sensitivity*accelerator, 0*sensitivity*accelerator)
         accelerator += accelerator_incr
         current_region = LEFT_REGION
     elif center_x > hor_region_right[0]:
-        mouse.move(1*sensitivity_x*accelerator, 0*sensitivity_y*accelerator)
+        mouse.move(1*sensitivity*accelerator, 0*sensitivity*accelerator)
         accelerator += accelerator_incr
         current_region = RIGHT_REGION
     elif center_y < ver_region_top[1]:
-        mouse.move(0*sensitivity_x*accelerator, -1*sensitivity_y*accelerator)
+        mouse.move(0*sensitivity*accelerator, -1*sensitivity*accelerator)
         accelerator += accelerator_incr
         current_region = TOP_REGION
     elif center_y > ver_region_bottom[0]:
-        mouse.move(0*sensitivity_x*accelerator, 1*sensitivity_y*accelerator)
+        mouse.move(0*sensitivity*accelerator, 1*sensitivity*accelerator)
         accelerator += accelerator_incr
         current_region = BOTTOM_REGION
     else:
-        mouse.move(0*sensitivity_x, 0*sensitivity_y)
+        mouse.move(0*sensitivity, 0*sensitivity)
         current_region = CENTER_REGION
     if current_region != last_region:
         accelerator = 1
     last_region = current_region
 
 
-
-# gesture classifier function using the model for prediction
-def gesture_classifier(left, right, top, bottom, image_np):
-    global last_gesture, pred_counter, list_predictions, counter
+def crop_hands (left, right, top, bottom, image_np):
     crop_img = image_np[int(top):int(bottom), int(left):int(right)]
     if(not crop_img.any()):
-        return
+        return None
+    return crop_img
+# gesture classifier function using the model for prediction
+def gesture_classifier(crop_img,l_gesture):
+    global pred_counter, list_predictions, counter, last_gesture
+    
     crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
     crop_img = Image.fromarray(crop_img)
     crop_img = crop_img.resize((128, 128), Image.ANTIALIAS)
-    
-#    crop_img = Image.open("C:/TensorFlow/workspace/training_demo/mark81.jpg")
-#    crop_img = crop_img.transpose(Image.FLIP_LEFT_RIGHT)
     crop_img = np.asarray(crop_img)
-#    cv2.imwrite("C:/TensorFlow/workspace/training_demo/mark"+str(counter)+".jpg",crop_img)
-
     crop_img = crop_img.astype('float32')
     crop_img = np.expand_dims(crop_img, axis=0)
     crop_img = resnet50.preprocess_input(crop_img)
@@ -286,6 +284,8 @@ def gesture_classifier(left, right, top, bottom, image_np):
     gesture, y = predict(list_predictions)
 #    print("last gesture before conditions: ",last_gesture)
 #    print(y_new)
+    if l_gesture != "":
+        last_gesture = l_gesture
     if gesture > 0.5:
         print(classes[y])
         if classes[y] == "one" and last_gesture != "one":
