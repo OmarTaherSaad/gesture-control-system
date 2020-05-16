@@ -15,13 +15,14 @@ score_thresh = 0.2
 # does detection on images in an input queue and puts it on an output queue
 
 
-def worker(input_q, output_q, cap_params, frame_processed):
+def worker_detect(input_q, output_q,classify_q, cap_params, frame_processed):
     print(">> loading frozen model for worker")
     detection_graph, sess = detector_utils.load_inference_graph()
     sess = tf.compat.v1.Session(graph=detection_graph)
+    print("> ===== in worker_detect loop, frame ", frame_processed)
     while True:
-        #print("> ===== in worker loop, frame ", frame_processed)
         frame = input_q.get()
+        crop_img = None
         if (frame is not None):
             # Actual detection. Variable boxes contains the bounding box cordinates for hands detected,
             # while scores contains the confidence for each of these boxes.
@@ -30,10 +31,13 @@ def worker(input_q, output_q, cap_params, frame_processed):
             boxes, scores = detector_utils.detect_objects(
                 frame, detection_graph, sess)
             # draw bounding boxes
-            detector_utils.draw_box_on_image(
+            crop_img,last_gesture = detector_utils.draw_box_on_image(
                 cap_params['num_hands_detect'], cap_params["score_thresh"],
                 scores, boxes, cap_params['im_width'], cap_params['im_height'],
                 frame)
+            if crop_img is not None:
+#                print("adding Crop img to classify queue")
+                classify_q.put((crop_img,last_gesture))
             # add frame annotated with bounding box to queue
             output_q.put(frame)
             frame_processed += 1
@@ -41,6 +45,13 @@ def worker(input_q, output_q, cap_params, frame_processed):
             output_q.put(frame)
     sess.close()
 
+def worker_classify(classify_q):
+    print("> ===== in worker_classify loop, frame ")
+    while(True):
+        hand_frame = classify_q.get()
+        if hand_frame[0] is not None:
+            detector_utils.gesture_classifier(hand_frame[0],hand_frame[1])
+   
 
 if __name__ == '__main__':
 
@@ -92,7 +103,7 @@ if __name__ == '__main__':
         '--num-workers',
         dest='num_workers',
         type=int,
-        default=1,
+        default=2,
         help='Number of workers.')
     parser.add_argument(
         '-q-size',
@@ -105,6 +116,7 @@ if __name__ == '__main__':
 
     input_q = Queue(maxsize=args.queue_size)
     output_q = Queue(maxsize=args.queue_size)
+    classify_q = Queue(maxsize=args.queue_size)
 
     video_capture = WebcamVideoStream(
         src=args.video_source, width=args.width, height=args.height).start()
@@ -120,8 +132,10 @@ if __name__ == '__main__':
     print(cap_params, args)
 
     # spin up workers to paralleize detection.
-    pool = Pool(args.num_workers, worker,
-                (input_q, output_q, cap_params, frame_processed))
+    pool = Pool(int(args.num_workers/2), worker_detect,
+                (input_q, output_q,classify_q, cap_params, frame_processed))
+    pool2 = Pool(int(args.num_workers/2), worker_classify,
+                (classify_q,))
 
     start_time = datetime.datetime.now()
     num_frames = 0
@@ -168,5 +182,6 @@ if __name__ == '__main__':
     fps = num_frames / elapsed_time
     print("fps", fps)
     pool.terminate()
+    pool2.terminate()
     video_capture.stop()
     cv2.destroyAllWindows()
