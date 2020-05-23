@@ -7,13 +7,19 @@ import time
 from utils.detector_utils import WebcamVideoStream
 import datetime
 import argparse
+import GUI
+import sys
 
 frame_processed = 0
 score_thresh = 0.2
 
 # Create a worker thread that loads graph and
 # does detection on images in an input queue and puts it on an output queue
-
+#app = GUI.QtWidgets.QApplication(sys.argv)
+#window = GUI.Ui()
+#print("before app.exec_()")
+#app.exec_()
+#print("after app.exec_()")
 
 def worker_detect(input_q, output_q,classify_q, cap_params, frame_processed):
     print(">> loading frozen model for worker")
@@ -54,7 +60,8 @@ def worker_classify(classify_q):
    
 
 if __name__ == '__main__':
-
+    app = GUI.QtWidgets.QApplication(sys.argv)
+    window = GUI.Ui()
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-src',
@@ -142,7 +149,7 @@ if __name__ == '__main__':
     fps = 0
     index = 0
 
-    cv2.namedWindow('Multi-Threaded Detection', cv2.WINDOW_NORMAL)
+#    cv2.namedWindow('Multi-Threaded Detection', cv2.WINDOW_NORMAL)
 
     while True:
         frame = video_capture.read()
@@ -165,7 +172,8 @@ if __name__ == '__main__':
                 if (args.fps > 0):
                     detector_utils.draw_fps_on_image("FPS : " + str(int(fps)),
                                                      output_frame)
-                cv2.imshow('Multi-Threaded Detection', output_frame)
+#                cv2.imshow('Multi-Threaded Detection', output_frame)
+                window.put_frame(output_frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             else:
@@ -185,3 +193,4 @@ if __name__ == '__main__':
     pool2.terminate()
     video_capture.stop()
     cv2.destroyAllWindows()
+#    app.exec_()

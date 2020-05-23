@@ -56,6 +56,9 @@
    <property name="text">
     <string/>
    </property>
+   <property name="pixmap">
+    <pixmap>gui_images/loading.gif</pixmap>
+   </property>
   </widget>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
@@ -191,7 +194,7 @@
     <number>1</number>
    </property>
    <property name="maximum">
-    <number>10</number>
+    <number>8</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -245,7 +248,7 @@
     <number>1</number>
    </property>
    <property name="maximum">
-    <number>10</number>
+    <number>8</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>

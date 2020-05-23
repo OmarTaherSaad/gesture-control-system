@@ -1,6 +1,6 @@
 # Utilities for object detector.
 from PIL import Image
-
+import GUI
 import numpy as np
 import sys
 import tensorflow as tf
@@ -17,6 +17,7 @@ import tensorflow.keras.applications.vgg16 as vgg16
 import tensorflow.keras.applications.vgg19 as vgg19
 import tensorflow.keras.applications.resnet50 as resnet50
 import math
+import json
 # loading model of classifier
 model1 = resnet50.ResNet50(
     weights='imagenet', include_top=False, input_shape=(128, 128, 3), classes=6)
@@ -120,17 +121,46 @@ def load_inference_graph():
     return detection_graph, sess
 
 
+
+def change_settings():
+    global sensitivity, accelerator_incr, HOR_EXTREME, VER_EXTREME
+    global SCREEN_W, SCREEN_H ,top_left_x ,top_left_y, bottom_right_x, bottom_right_y 
+    global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
+
+    with open('config.json') as file:
+        data = json.load(file)
+        sensitivity = data["sensitivity"]
+        accelerator_incr = data["acceleration"]
+        HOR_EXTREME = data["Horizontal_Margin"]
+        VER_EXTREME = data["Vertical_Margin"]
+        SCREEN_W = data["resolution_in_x"]
+        SCREEN_H = data["resolution_in_y"]
+    top_left_x = int(320 * HOR_EXTREME)
+    top_left_y = int(240 * VER_EXTREME)
+    bottom_right_x = int(320 - 320 * HOR_EXTREME )
+    bottom_right_y = int(240 -240 * VER_EXTREME)
+    hor_region_left = (0, SCREEN_W * HOR_EXTREME)
+    hor_region_mid = (hor_region_left[1], SCREEN_W - (SCREEN_W * HOR_EXTREME))
+    hor_region_right = (hor_region_mid[1], SCREEN_W)
+    ver_region_top = (0, SCREEN_H * VER_EXTREME)
+    ver_region_mid = (ver_region_top[1], SCREEN_H - (SCREEN_H * VER_EXTREME))
+    ver_region_bottom = (ver_region_mid[1], SCREEN_H)
+
 # draw the detected bounding boxes on the images
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
     global center_old, left_hand_flag, right_hand_flag, last_num_hands, current_num_hands, counter
-    global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
+    global top_left_x,top_left_y, bottom_right_x,bottom_right_y
+    global SCREEN_W,SCREEN_H
+#    print ("GUI.apply_flag: ",GUI.Ui.apply_flag)
+#    if GUI.Ui.apply_flag == 1:
+    change_settings()
+        
     last_gesture = ""
     # initializing centers with max numbers
     new_centers = [(2000, 2000), (2000, 2000)]
     #drawing rectangle to show center where the mouse stops
     img_to_show = image_np.copy()
     cv2.rectangle(image_np, (top_left_x,top_left_y), (bottom_right_x,bottom_right_y), (255, 0, 0), 3, 1)
-    cv2.putText(image_np, 'Center', (80,130), cv2.FONT_HERSHEY_SIMPLEX,  1.5, (0,0,0), 2, cv2.LINE_AA)
     current_num_hands = 0
     # detecting hands
     # looping through hands detected
@@ -143,6 +173,7 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
             # crop image and resize it and pass it to the model
             center = (((int(((right-left)/2) + left))/im_width)*SCREEN_W,
                       ((int(((bottom-top)/2)+top))/im_height)*SCREEN_H)
+            cv2.circle(image_np, (((int(((right-left)/2) + left))),((int(((bottom-top)/2)+top)))), radius=5, color=(0, 0, 255), thickness=-1)
             new_centers[i] = center
             
 #    print("current num hands",current_num_hands)
