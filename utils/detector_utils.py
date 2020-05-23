@@ -78,8 +78,6 @@ ver_region_bottom = (ver_region_mid[1], SCREEN_H)
 
 # last_gesture
 last_gesture = ""
-#flag of scrolling
-flag_scroll = 0
 #last number of hands detected
 last_num_hands = 0
 current_num_hands = 0
@@ -296,7 +294,7 @@ def crop_hands (left, right, top, bottom, image_np):
     return crop_img
 # gesture classifier function using the model for prediction
 def gesture_classifier(crop_img,l_gesture):
-    global pred_counter, list_predictions, counter, last_gesture, flag_scroll
+    global pred_counter, list_predictions, counter, last_gesture
     
     crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
     crop_img = Image.fromarray(crop_img)
@@ -321,12 +319,12 @@ def gesture_classifier(crop_img,l_gesture):
         if classes[y] == "one" and last_gesture != "one":
             mouse.click(Button.left)
             last_gesture = "one"
-        elif classes[y] == "three" and last_gesture != "three":
-            mouse.click(Button.right)
-            last_gesture = "three"
         elif classes[y] == "two" and last_gesture != "two":
             mouse.click(Button.left, 2)
             last_gesture = "two"
+        elif classes[y] == "three" and last_gesture != "three":
+            mouse.click(Button.right)
+            last_gesture = "three"
         elif classes[y] == "palm" :
             mouse.scroll(0, 80)
             last_gesture = "palm"
