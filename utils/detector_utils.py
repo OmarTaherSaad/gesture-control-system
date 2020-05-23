@@ -78,6 +78,8 @@ ver_region_bottom = (ver_region_mid[1], SCREEN_H)
 
 # last_gesture
 last_gesture = ""
+#flag of scrolling
+flag_scroll = 0
 #last number of hands detected
 last_num_hands = 0
 current_num_hands = 0
@@ -149,10 +151,7 @@ def change_settings():
 # draw the detected bounding boxes on the images
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
     global center_old, left_hand_flag, right_hand_flag, last_num_hands, current_num_hands, counter
-    global top_left_x,top_left_y, bottom_right_x,bottom_right_y
-    global SCREEN_W,SCREEN_H
-#    print ("GUI.apply_flag: ",GUI.Ui.apply_flag)
-#    if GUI.Ui.apply_flag == 1:
+
     change_settings()
         
     last_gesture = ""
@@ -179,7 +178,7 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
 #    print("current num hands",current_num_hands)
 #    print("last num hands before condition",last_num_hands)
     if current_num_hands == 2 and last_num_hands == 1:
-        last_gesture = "palm"
+        last_gesture = "nothing"
         last_num_hands = 2
 #        print("last gesture in palm condition",last_gesture)
     elif current_num_hands == 1:
@@ -297,7 +296,7 @@ def crop_hands (left, right, top, bottom, image_np):
     return crop_img
 # gesture classifier function using the model for prediction
 def gesture_classifier(crop_img,l_gesture):
-    global pred_counter, list_predictions, counter, last_gesture
+    global pred_counter, list_predictions, counter, last_gesture, flag_scroll
     
     crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
     crop_img = Image.fromarray(crop_img)
@@ -322,17 +321,21 @@ def gesture_classifier(crop_img,l_gesture):
         if classes[y] == "one" and last_gesture != "one":
             mouse.click(Button.left)
             last_gesture = "one"
-        elif classes[y] == "fist" and last_gesture != "fist":
+        elif classes[y] == "three" and last_gesture != "three":
             mouse.click(Button.right)
-            last_gesture = "fist"
+            last_gesture = "three"
         elif classes[y] == "two" and last_gesture != "two":
             mouse.click(Button.left, 2)
             last_gesture = "two"
-        elif classes[y] == "palm":
-            last_gesture = classes[y]
+        elif classes[y] == "palm" :
+            mouse.scroll(0, 80)
+            last_gesture = "palm"
+        elif classes[y] == "fist":
+            mouse.scroll(0, -80)
+            last_gesture = "fist"  
+        
 
 # Calculating average of votes of last three frames to get the most accurate class
-
 
 def predict(prediction):
     sum_pred = 0

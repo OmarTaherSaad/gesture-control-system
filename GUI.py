@@ -4,6 +4,7 @@ import cv2
 import sys
 from PIL import Image
 import json
+  
 resolution_in_x = 1920
 resolution_in_y = 1080
 Horizontal_Margin = 0.4 
@@ -11,7 +12,6 @@ Vertical_Margin = 0.4
 sensitivity = 3
 acceleration = 0.2
 
-#apply_flag = 0
 class Ui(QtWidgets.QDialog):
     def __init__(self):
         global resolution_in_x, resolution_in_y, Horizontal_Margin, Vertical_Margin, sensitivity, acceleration
@@ -54,11 +54,6 @@ class Ui(QtWidgets.QDialog):
         #Apply_button
         self.apply_button=self.findChild(QtWidgets.QPushButton,"apply_button")
         self.apply_button.clicked.connect(self.Apply)
-        #vid = cv2.VideoCapture(0)
-		#videostream
-        self.videostream_label=self.findChild(QtWidgets.QLabel,"video_stream")
-#        img=cv2.imread('cat.jpeg')
-#        self.put_frame(img)
         self.show() # Show the GUI
     def Reset(self):
         #Reset to default configuration
@@ -136,13 +131,6 @@ class Ui(QtWidgets.QDialog):
         data = img.tobytes("raw","RGBA")
         qim = QImage(data, img.size[0], img.size[1], QImage.Format_ARGB32)
         pix = QPixmap.fromImage(qim)
-		#pixmap = QPixmap('cat.jpeg')
-		#pixmap_resized = pixmap.scaled(221, 191)
-		#self.video_stream.setPixmap(pixmap_resized)
-        pixmap_resized = pix.scaled(221, 191)
-        self.video_stream.setPixmap(pixmap_resized)
+        self.video_stream.setPixmap(pix)
 		
-#app = QtWidgets.QApplication(sys.argv)
-#window = Ui()
-#app.exec_()
 
