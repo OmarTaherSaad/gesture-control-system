@@ -1,8 +1,0 @@
-video_stream  --------> for showing video
-screen_combo --------> for selecting between 1366*768 and 1920*1080
-sensitivity_slider
-acceleration_slider
-horizontal_slider
-vertical_slider
-apply_button
-reset_button
