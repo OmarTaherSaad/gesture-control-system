@@ -122,7 +122,7 @@ def load_inference_graph():
 
 
 
-def change_settings():
+def change_settings(width,height):
     global sensitivity, accelerator_incr, HOR_EXTREME, VER_EXTREME
     global SCREEN_W, SCREEN_H ,top_left_x ,top_left_y, bottom_right_x, bottom_right_y 
     global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
@@ -135,10 +135,10 @@ def change_settings():
         VER_EXTREME = data["Vertical_Margin"]
         SCREEN_W = data["resolution_in_x"]
         SCREEN_H = data["resolution_in_y"]
-    top_left_x = int(320 * HOR_EXTREME)
-    top_left_y = int(240 * VER_EXTREME)
-    bottom_right_x = int(320 - 320 * HOR_EXTREME )
-    bottom_right_y = int(240 -240 * VER_EXTREME)
+    top_left_x = int(width * HOR_EXTREME)
+    top_left_y = int(height * VER_EXTREME)
+    bottom_right_x = int(width * (1 - HOR_EXTREME) )
+    bottom_right_y = int(height * (1 - VER_EXTREME))
     hor_region_left = (0, SCREEN_W * HOR_EXTREME)
     hor_region_mid = (hor_region_left[1], SCREEN_W - (SCREEN_W * HOR_EXTREME))
     hor_region_right = (hor_region_mid[1], SCREEN_W)
@@ -150,7 +150,7 @@ def change_settings():
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
     global center_old, left_hand_flag, right_hand_flag, last_num_hands, current_num_hands, counter
 
-    change_settings()
+    change_settings(im_width, im_height)
         
     last_gesture = ""
     # initializing centers with max numbers

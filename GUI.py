@@ -13,7 +13,7 @@ sensitivity = 3
 acceleration = 0.2
 closing_flag = 0
 
-class Ui(QtWidgets.QDialog):
+class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         global resolution_in_x, resolution_in_y, Horizontal_Margin, Vertical_Margin, sensitivity, acceleration
         with open('config.json') as file:
@@ -25,11 +25,10 @@ class Ui(QtWidgets.QDialog):
             resolution_in_x = data["resolution_in_x"]
             resolution_in_y = data["resolution_in_y"]
         super(Ui, self).__init__() # Call the inherited classes __init__ method
-        uic.loadUi('gui.ui', self) # Load the .ui file
+        uic.loadUi('gui2.ui', self)  # Load the .ui file
         #Reset
         self.reset_button=self.findChild(QtWidgets.QPushButton,"reset_button")
         self.reset_button.clicked.connect(self.Reset)
-        
         #screen_resolution
         self.screen_resolution_combo=self.findChild(QtWidgets.QComboBox,"screen_combo")
         self.screen_resolution_combo.view().pressed.connect(self.handleTheResolution)
