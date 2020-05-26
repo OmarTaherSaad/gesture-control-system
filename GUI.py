@@ -11,6 +11,7 @@ Horizontal_Margin = 0.4
 Vertical_Margin = 0.4 
 sensitivity = 3
 acceleration = 0.2
+closing_flag = 0
 
 class Ui(QtWidgets.QDialog):
     def __init__(self):
@@ -132,5 +133,10 @@ class Ui(QtWidgets.QDialog):
         qim = QImage(data, img.size[0], img.size[1], QImage.Format_ARGB32)
         pix = QPixmap.fromImage(qim)
         self.video_stream.setPixmap(pix)
-		
+        
+    def closeEvent(self, event):
+        global closing_flag
+        closing_flag = 1
+        event.accept()
+	
 
