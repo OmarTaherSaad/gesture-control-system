@@ -52,6 +52,14 @@ In order to do mouse actions some gestures should be made , and there pre mapped
 ***
 * Right Click
 ***
+![Gesture three](https://i.ibb.co/HC50dH3/dyaa-three626original.png) 
+***
+* Scroll Up
+***
+![Gesture palm](https://i.ibb.co/tQv2xrz/martin-palm816original.png) 
+***
+* Scroll Down
+***
 ![Gesture fist](https://i.ibb.co/sPXDpM0/dyaa-fist908original.png) 
 ***
 
