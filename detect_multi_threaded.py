@@ -61,7 +61,9 @@ def worker_classify(classify_q):
 
 if __name__ == '__main__':
     app = GUI.QtWidgets.QApplication(sys.argv)
-    window = GUI.Ui()
+    screen = app.primaryScreen()
+    size = screen.size()
+    window = GUI.Ui(size)
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-src',
