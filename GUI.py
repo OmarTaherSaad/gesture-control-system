@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtGui import QPixmap,QImage
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap,QImage,QFont,QPalette,QBrush
 import cv2
 import sys
 from PIL import Image
@@ -13,8 +14,8 @@ sensitivity = 3
 acceleration = 0.2
 closing_flag = 0
 
-class Ui(QtWidgets.QDialog):
-    def __init__(self):
+class Ui(QtWidgets.QWidget):
+    def __init__(self,size):
         global resolution_in_x, resolution_in_y, Horizontal_Margin, Vertical_Margin, sensitivity, acceleration
         with open('config.json') as file:
             data = json.load(file)
@@ -25,36 +26,155 @@ class Ui(QtWidgets.QDialog):
             resolution_in_x = data["resolution_in_x"]
             resolution_in_y = data["resolution_in_y"]
         super(Ui, self).__init__() # Call the inherited classes __init__ method
-        uic.loadUi('gui.ui', self)  # Load the .ui file
-        #Reset
-        self.reset_button=self.findChild(QtWidgets.QPushButton,"reset_button")
-        self.reset_button.clicked.connect(self.Reset)
-        #screen_resolution
-        self.screen_resolution_combo=self.findChild(QtWidgets.QComboBox,"screen_combo")
-        self.screen_resolution_combo.view().pressed.connect(self.handleTheResolution)
-        
+        self.setWindowTitle("Gesture Mouse")
+        self.gen_size = int(size.height() / 24)
+    
+        #Prepare Font
+        main_font = QFont("Arial", int(self.gen_size/5), QFont.Bold) 
+
+        #Webcam Screem
+        v_layout = QtWidgets.QVBoxLayout() # mainWindow layout
+        pix = QPixmap("gui_images/logo.jpg")
+        pix = pix.scaledToWidth(320)
+        pix = pix.scaledToHeight(240)
+        self.video_stream = QtWidgets.QLabel()
+        self.video_stream.setPixmap(pix)
+        v_layout.addWidget(self.video_stream)
+
+        #Resolution Row
+        h_layout_res = QtWidgets.QHBoxLayout() # Placeholder for a row
+        res_pix = QPixmap("gui_images/communications.png")
+        res_pix = res_pix.scaledToWidth(self.gen_size)
+        res_pix = res_pix.scaledToHeight(self.gen_size)
+        self.res_icon = QtWidgets.QLabel()
+        self.res_icon.setPixmap(res_pix)
+        self.res_label = QtWidgets.QLabel("Resolution")
+        self.res_label.setFont(main_font)
+        self.screen_combo = QtWidgets.QComboBox()
+        self.screen_combo.addItem("1366 * 768")
+        self.screen_combo.addItem("1920 * 1080")
+        self.screen_combo.view().pressed.connect(self.handleTheResolution)
+
+        h_layout_res.addWidget(self.res_icon)
+        h_layout_res.addWidget(self.res_label)
+        h_layout_res.addItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        v_layout.addLayout(h_layout_res)
+        v_layout.addWidget(self.screen_combo)
+
+
+        #Sensitivity Row
+        h_layout_sens = QtWidgets.QHBoxLayout() # Placeholder for a row
+        sens_pix = QPixmap("gui_images/arrows.png")
+        sens_pix = sens_pix.scaledToWidth(self.gen_size)
+        sens_pix = sens_pix.scaledToHeight(self.gen_size)
+        self.sens_icon = QtWidgets.QLabel()
+        self.sens_icon.setPixmap(sens_pix)
+        self.sens_label = QtWidgets.QLabel("Sensitivity")
+        self.sens_label.setFont(main_font)
+        self.sens_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.sens_slider.setTickInterval(1)
+        self.sens_slider.setMinimum(1)
+        self.sens_slider.setMaximum(10)
+        self.sens_slider.valueChanged.connect(self.handleSensitivity)
+        self.sens_slider.setValue(sensitivity)
+
+        h_layout_sens.addWidget(self.sens_icon)
+        h_layout_sens.addWidget(self.sens_label)
+        h_layout_sens.addItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        v_layout.addLayout(h_layout_sens)
+        v_layout.addWidget(self.sens_slider)
+
+        #Acceleration Row
+        h_layout_acc = QtWidgets.QHBoxLayout() # Placeholder for a row
+        acc_pix = QPixmap("gui_images/arrows.png")
+        acc_pix= acc_pix.scaledToWidth(self.gen_size)
+        acc_pix= acc_pix.scaledToHeight(self.gen_size)
+        self.acc_icon = QtWidgets.QLabel()
+        self.acc_icon.setPixmap(acc_pix)
+        self.acc_label = QtWidgets.QLabel("Acceleration")
+        self.acc_label.setFont(main_font)
+        self.acc_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.acc_slider.setTickInterval(1)
+        self.acc_slider.setMinimum(1)
+        self.acc_slider.setMaximum(10)
+        self.acc_slider.valueChanged.connect(self.handleAcceleration)
+        self.acc_slider.setValue(acceleration/0.1)
+
+        h_layout_acc.addWidget(self.acc_icon)
+        h_layout_acc.addWidget(self.acc_label)
+        h_layout_acc.addItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        v_layout.addLayout(h_layout_acc)
+        v_layout.addWidget(self.acc_slider)
+
         #Horizontal Margin
-        self.Horizontal_Margin_slider=self.findChild(QtWidgets.QSlider,"horizontal_slider")
-        self.Horizontal_Margin_slider.valueChanged.connect(self.handleHorizontalMargin)
-        self.Horizontal_Margin_slider.setValue(Horizontal_Margin/0.05)
+        h_layout_horz_margin = QtWidgets.QHBoxLayout() # Placeholder for a row
+        horz_margin_pix = QPixmap("gui_images/horizontal.png")
+        horz_margin_pix= horz_margin_pix.scaledToWidth(self.gen_size)
+        horz_margin_pix= horz_margin_pix.scaledToHeight(self.gen_size)
+        self.horz_margin_icon = QtWidgets.QLabel()
+        self.horz_margin_icon.setPixmap(horz_margin_pix)
+        self.horz_margin_label = QtWidgets.QLabel("Horizontal Margin")
+        self.horz_margin_label.setFont(main_font)
+        self.horz_margin_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.horz_margin_slider.setTickInterval(1)
+        self.horz_margin_slider.setMinimum(1)
+        self.horz_margin_slider.setMaximum(8)
+        self.horz_margin_slider.valueChanged.connect(self.handleHorizontalMargin)
+        self.horz_margin_slider.setValue(Horizontal_Margin/0.05)
+        
+        h_layout_horz_margin.addWidget(self.horz_margin_icon)
+        h_layout_horz_margin.addWidget(self.horz_margin_label)
+        h_layout_horz_margin.addItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        v_layout.addLayout(h_layout_horz_margin)
+        v_layout.addWidget(self.horz_margin_slider)
+
         #Vertical Margin
-        self.Vertical_Margin_slider=self.findChild(QtWidgets.QSlider,"vertical_slider")
-        self.Vertical_Margin_slider.valueChanged.connect(self.handleVerticalMargin)
-        self.Vertical_Margin_slider.setValue(Vertical_Margin/0.05)
+        h_layout_vert_margin = QtWidgets.QHBoxLayout() # Placeholder for a row
+        vert_margin_pix = QPixmap("gui_images/vertical.png")
+        vert_margin_pix = vert_margin_pix.scaledToWidth(self.gen_size)
+        vert_margin_pix = vert_margin_pix.scaledToHeight(self.gen_size)
+        self.vert_margin_icon = QtWidgets.QLabel()
+        self.vert_margin_icon.setPixmap(vert_margin_pix)
+        self.vert_margin_label = QtWidgets.QLabel("Vertical Margin")
+        self.vert_margin_label.setFont(main_font)
+        self.vert_margin_slider = QtWidgets.QSlider(Qt.Horizontal)
+        self.vert_margin_slider.setTickInterval(1)
+        self.vert_margin_slider.setMinimum(1)
+        self.vert_margin_slider.setMaximum(8)
+        self.vert_margin_slider.valueChanged.connect(self.handleVerticalMargin)
+        self.vert_margin_slider.setValue(Vertical_Margin/0.05)
 
-        #sensitivity_slider
-        self.sensitivity_slider=self.findChild(QtWidgets.QSlider,"sensitivity_slider")
-        self.sensitivity_slider.valueChanged.connect(self.handleSensitivity)
-        self.sensitivity_slider.setValue(sensitivity)
-		#Acceleration_slider
-        self.acceleration_slider=self.findChild(QtWidgets.QSlider,"acceleration_slider")
-        self.acceleration_slider.valueChanged.connect(self.handleAcceleration)
-        self.acceleration_slider.setValue(acceleration/0.1)
+        h_layout_vert_margin.addWidget(self.vert_margin_icon)
+        h_layout_vert_margin.addWidget(self.vert_margin_label)
+        h_layout_vert_margin.addItem(QtWidgets.QSpacerItem(10, 10, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        v_layout.addLayout(h_layout_vert_margin)
+        v_layout.addWidget(self.vert_margin_slider)
 
-        #Apply_button
-        self.apply_button=self.findChild(QtWidgets.QPushButton,"apply_button")
+        h_layout_btns = QtWidgets.QHBoxLayout() # Placeholder for a row
+        #Apply button
+        self.apply_button = QtWidgets.QPushButton("Apply")
         self.apply_button.clicked.connect(self.Apply)
+
+        #Reset Button
+        self.reset_button = QtWidgets.QPushButton("Reset")
+        self.reset_button.clicked.connect(self.Reset)
+
+        h_layout_btns.addWidget(self.apply_button)
+        h_layout_btns.addWidget(self.reset_button)
+        v_layout.addLayout(h_layout_btns)
+        
+        self.setLayout(v_layout)
+
+        #Set Background
+        oImage = QImage("gui_images/background.jpg")
+        sImage = oImage.scaled(self.sizeHint())                   # resize Image to widgets size
+        palette = QPalette()
+        palette.setBrush(QPalette.Window, QBrush(sImage))                        
+        self.setPalette(palette)
+
+        self.setFixedSize(self.sizeHint()) #Disable resize
         self.show() # Show the GUI
+
     def Reset(self):
         #Reset to default configuration
         global resolution_in_x, resolution_in_y, Horizontal_Margin, Vertical_Margin, sensitivity, acceleration
@@ -65,10 +185,10 @@ class Ui(QtWidgets.QDialog):
         Vertical_Margin = 0.4 
         sensitivity = 3
         acceleration = 0.2
-        self.Horizontal_Margin_slider.setValue(Horizontal_Margin/0.05)
-        self.Vertical_Margin_slider.setValue(Vertical_Margin/0.05)
-        self.sensitivity_slider.setValue(sensitivity)
-        self.acceleration_slider.setValue(acceleration/0.1)
+        self.horz_margin_slider.setValue(Horizontal_Margin/0.05)
+        self.vert_margin_slider.setValue(Vertical_Margin/0.05)
+        self.sens_slider.setValue(sensitivity)
+        self.acc_slider.setValue(acceleration/0.1)
         paramters = {
              "resolution_in_x" : resolution_in_x,
              "resolution_in_y": resolution_in_y,
@@ -83,7 +203,7 @@ class Ui(QtWidgets.QDialog):
     def handleTheResolution(self,index):
         global resolution_in_x, resolution_in_y
         print("RESOULTION NOW IS ")
-        item=self.screen_resolution_combo.model().itemFromIndex(index)
+        item=self.screen_combo.model().itemFromIndex(index)
         resolution_in_x,resolution_in_y=item.text().split("x")
         resolution_in_x=resolution_in_x[:len(resolution_in_x)-1]
         resolution_in_y=resolution_in_y[1:]
@@ -92,26 +212,31 @@ class Ui(QtWidgets.QDialog):
         print(resolution_in_x)
         print(resolution_in_y)
         print(item.text())
+
     def handleHorizontalMargin(self):
         global Horizontal_Margin
         print("HORIZONTALMARGIN IS")
-        print(self.Horizontal_Margin_slider.value())
-        Horizontal_Margin = self.Horizontal_Margin_slider.value() * 0.05
+        print(self.horz_margin_slider.value())
+        Horizontal_Margin = self.horz_margin_slider.value() * 0.05
+
     def handleVerticalMargin(self):	
         global Vertical_Margin
         print("VERTICALMARGIN")
-        print(self.Vertical_Margin_slider.value())
-        Vertical_Margin = self.Vertical_Margin_slider.value() * 0.05
+        print(self.vert_margin_slider.value())
+        Vertical_Margin = self.vert_margin_slider.value() * 0.05
+
     def handleSensitivity(self):
         global sensitivity
         print("SENSITIVITY IS")
-        print(self.sensitivity_slider.value())
-        sensitivity = self.sensitivity_slider.value()
+        print(self.sens_slider.value())
+        sensitivity = self.sens_slider.value()
+
     def handleAcceleration(self):
         global acceleration
         print("ACCELERATION IS ")
-        print(self.acceleration_slider.value())
-        acceleration =  self.acceleration_slider.value() * 0.1
+        print(self.acc_slider.value())
+        acceleration =  self.acc_slider.value() * 0.1
+
     def Apply(self):
         print("Apply")
         paramters = {
