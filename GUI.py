@@ -28,9 +28,11 @@ class Ui(QtWidgets.QWidget):
         super(Ui, self).__init__() # Call the inherited classes __init__ method
         self.setWindowTitle("Gesture Mouse")
         self.gen_size = int(size.height() / 24)
-    
+        self.font_size = int(self.gen_size/5)
+        if self.font_size < 10 :
+            self.font_size = 10
         #Prepare Font
-        main_font = QFont("Arial", int(self.gen_size/5), QFont.Bold) 
+        main_font = QFont("Arial", self.font_size, QFont.Bold) 
 
         #Webcam Screem
         v_layout = QtWidgets.QVBoxLayout() # mainWindow layout
@@ -39,6 +41,7 @@ class Ui(QtWidgets.QWidget):
         pix = pix.scaledToHeight(240)
         self.video_stream = QtWidgets.QLabel()
         self.video_stream.setPixmap(pix)
+        self.video_stream.setAlignment(Qt.AlignCenter)
         v_layout.addWidget(self.video_stream)
 
         #Resolution Row
