@@ -8,7 +8,6 @@ import os
 from threading import Thread
 from datetime import datetime
 import cv2
-from utils import label_map_util
 from collections import defaultdict
 from pynput.mouse import Button, Controller
 from tensorflow.keras.models import load_model
@@ -18,6 +17,10 @@ import tensorflow.keras.applications.vgg19 as vgg19
 import tensorflow.keras.applications.resnet50 as resnet50
 import math
 import json
+import time
+#old time
+old_time_det = 0
+old_time_class = 0
 # loading model of classifier
 model1 = resnet50.ResNet50(
     weights='imagenet', include_top=False, input_shape=(128, 128, 3), classes=6)
@@ -97,11 +100,6 @@ PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
 PATH_TO_LABELS = os.path.join(MODEL_NAME, 'object-detection.pbtxt')
 
 NUM_CLASSES = 1
-# load label map
-label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-categories = label_map_util.convert_label_map_to_categories(
-    label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
-category_index = label_map_util.create_category_index(categories)
 
 
 # Load a frozen infrerence graph into memory
@@ -122,7 +120,7 @@ def load_inference_graph():
 
 
 
-def change_settings(width,height):
+def change_settings():
     global sensitivity, accelerator_incr, HOR_EXTREME, VER_EXTREME
     global SCREEN_W, SCREEN_H ,top_left_x ,top_left_y, bottom_right_x, bottom_right_y 
     global hor_region_left, hor_region_mid, hor_region_right, ver_region_top, ver_region_mid, ver_region_bottom
@@ -135,10 +133,10 @@ def change_settings(width,height):
         VER_EXTREME = data["Vertical_Margin"]
         SCREEN_W = data["resolution_in_x"]
         SCREEN_H = data["resolution_in_y"]
-    top_left_x = int(width * HOR_EXTREME)
-    top_left_y = int(height * VER_EXTREME)
-    bottom_right_x = int(width * (1 - HOR_EXTREME) )
-    bottom_right_y = int(height * (1 - VER_EXTREME))
+    top_left_x = int(320 * HOR_EXTREME)
+    top_left_y = int(240 * VER_EXTREME)
+    bottom_right_x = int(320 - 320 * HOR_EXTREME )
+    bottom_right_y = int(240 -240 * VER_EXTREME)
     hor_region_left = (0, SCREEN_W * HOR_EXTREME)
     hor_region_mid = (hor_region_left[1], SCREEN_W - (SCREEN_W * HOR_EXTREME))
     hor_region_right = (hor_region_mid[1], SCREEN_W)
@@ -149,8 +147,10 @@ def change_settings(width,height):
 # draw the detected bounding boxes on the images
 def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, im_height, image_np):
     global center_old, left_hand_flag, right_hand_flag, last_num_hands, current_num_hands, counter
-
-    change_settings(im_width, im_height)
+#    global old_time_det
+#    old_time_det = time.time()
+    
+    change_settings()
         
     last_gesture = ""
     # initializing centers with max numbers
@@ -218,6 +218,8 @@ def draw_box_on_image(num_hands_detect, score_thresh, scores, boxes, im_width, i
         return crop_img, last_gesture
         # gesture classifier function calling
 #        gesture_classifier(left, right, top, bottom, img_to_show)
+#    time_ms = time.time() - old_time_det
+#    print("Detection_time_ms: ",time_ms)
     return None,""
 # Mouse tracking function
 # Option 1: Move mouse with hand movement
@@ -295,7 +297,8 @@ def crop_hands (left, right, top, bottom, image_np):
 # gesture classifier function using the model for prediction
 def gesture_classifier(crop_img,l_gesture):
     global pred_counter, list_predictions, counter, last_gesture
-    
+#    global old_time_class
+#    old_time_class = time.time()
     crop_img = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
     crop_img = Image.fromarray(crop_img)
     crop_img = crop_img.resize((128, 128), Image.ANTIALIAS)
@@ -331,7 +334,9 @@ def gesture_classifier(crop_img,l_gesture):
         elif classes[y] == "fist":
             mouse.scroll(0, -80)
             last_gesture = "fist"  
-        
+#    time_ms = time.time() - old_time_class
+#    print("Classification_time_ms: ",time_ms)
+   
 
 # Calculating average of votes of last three frames to get the most accurate class
 
