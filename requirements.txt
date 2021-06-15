@@ -6,4 +6,4 @@ Keras-Preprocessing==1.1.0
 opencv-python
 utils
 pynput
-Pillow==8.1.1
+Pillow==8.2.0
