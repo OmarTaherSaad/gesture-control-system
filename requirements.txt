@@ -1,6 +1,6 @@
 numpy==1.21.0
 scipy==1.4.1
-tensorflow==2.6.4
+tensorflow==2.7.2
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.0
 opencv-python
